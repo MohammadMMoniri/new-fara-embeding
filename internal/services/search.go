@@ -4,6 +4,7 @@ package services
 import (
 	"context"
 
+	"document-embeddings/internal/models"
 	"document-embeddings/internal/repository"
 	"document-embeddings/pkg/logger"
 	"document-embeddings/pkg/openai"
@@ -51,6 +52,10 @@ func NewSearchService(repo *repository.Repository, openai *openai.Client, logger
 // func (s *SearchService) GetDocumentChunks(ctx context.Context, documentID string) ([]models.DocumentChunk, error) {
 // 	return s.repo.GetDocumentChunks(ctx, documentID)
 // }
+
+func (s *SearchService) ListDocuments(ctx context.Context, limit, offset string) ([]models.Document, error) {
+	return s.repo.ListDocuments(ctx, limit, offset)
+}
 
 func (s *SearchService) DeleteDocument(ctx context.Context, documentID string) error {
 	return s.repo.DeleteDocument(ctx, documentID)

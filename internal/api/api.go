@@ -30,6 +30,7 @@ func RegisterRoutes(r *gin.Engine, h *Handler) {
 		api.GET("/process/:id/status", h.GetProcessingStatus)
 		// api.POST("/search", h.SearchDocuments)
 		// api.GET("/documents/:id/chunks", h.GetDocumentChunks)
+		api.GET("/documents", h.ListDocuments)
 		api.DELETE("/documents/:id", h.DeleteDocument)
 	}
 }
@@ -147,6 +148,21 @@ func (h *Handler) GetProcessingStatus(c *gin.Context) {
 // 		"total":  len(chunks),
 // 	})
 // }
+
+func (h *Handler) ListDocuments(c *gin.Context) {
+
+	documents, err := h.services.Search.ListDocuments(c.Request.Context(), "0", "500")
+	if err != nil {
+		h.logger.Error("Failed to list documents", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list documents"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"documents": documents,
+		"total":     len(documents),
+	})
+}
 
 func (h *Handler) DeleteDocument(c *gin.Context) {
 	documentID := c.Param("id")

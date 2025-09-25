@@ -172,6 +172,35 @@ func (r *Repository) DeleteDocument(ctx context.Context, id string) error {
 // 	return count, err
 // }
 
+func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([]models.Document, error) {
+	query := `SELECT id, filename, summary, metadata, status, created_at, updated_at 
+			  FROM "Document" 
+			  WHERE status = 'processed' 
+			  ORDER BY created_at DESC 
+			  LIMIT $2 OFFSET $3`
+
+	rows, err := r.db.Query(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var documents []models.Document
+	for rows.Next() {
+		var doc models.Document
+		err := rows.Scan(
+			&doc.ID, &doc.Filename, &doc.Summary, &doc.Metadata,
+			&doc.Status, &doc.CreatedAt, &doc.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		documents = append(documents, doc)
+	}
+
+	return documents, nil
+}
+
 func (r *Repository) CreateDocument(ctx context.Context, doc *models.Document) error {
 	query := `INSERT INTO "Document" 
 			  (id, filename, file_type, file_path, content, summary, metadata, status, user_id, created_at, updated_at)

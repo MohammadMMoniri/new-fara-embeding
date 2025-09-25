@@ -57,6 +57,10 @@ func (s *SearchService) ListDocuments(ctx context.Context, limit, offset string)
 	return s.repo.ListDocuments(ctx, limit, offset)
 }
 
+func (s *SearchService) GetDocumentsByIDs(ctx context.Context, ids []string) ([]models.Document, error) {
+	return s.repo.GetDocumentsByIDs(ctx, ids)
+}
+
 func (s *SearchService) DeleteDocument(ctx context.Context, documentID string) error {
 	return s.repo.DeleteDocument(ctx, documentID)
 }

@@ -23,8 +23,17 @@ echo "3. List Documents:"
 curl -X GET "http://localhost:8080/api/v1/documents"
 echo -e "\n\n"
 
+# Get documents by IDs
+echo "4. Get Documents by IDs:"
+curl -X POST http://localhost:8080/api/v1/documents/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ids": ["doc-1", "doc-2", "doc-3"]
+  }'
+echo -e "\n\n"
+
 # Search documents (commented out since search is disabled)
-echo "4. Search Documents (disabled):"
+echo "5. Search Documents (disabled):"
 echo "Note: Search functionality is currently commented out"
 echo -e "\n"
 

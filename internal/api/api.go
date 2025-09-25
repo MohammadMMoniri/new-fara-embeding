@@ -31,6 +31,7 @@ func RegisterRoutes(r *gin.Engine, h *Handler) {
 		// api.POST("/search", h.SearchDocuments)
 		// api.GET("/documents/:id/chunks", h.GetDocumentChunks)
 		api.GET("/documents", h.ListDocuments)
+		api.POST("/documents/batch", h.GetDocumentsByIDs)
 		api.DELETE("/documents/:id", h.DeleteDocument)
 	}
 }
@@ -154,6 +155,34 @@ func (h *Handler) ListDocuments(c *gin.Context) {
 	if err != nil {
 		h.logger.Error("Failed to list documents", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list documents"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"documents": documents,
+		"total":     len(documents),
+	})
+}
+
+func (h *Handler) GetDocumentsByIDs(c *gin.Context) {
+	var req struct {
+		IDs []string `json:"ids" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(req.IDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ids array cannot be empty"})
+		return
+	}
+
+	documents, err := h.services.Search.GetDocumentsByIDs(c.Request.Context(), req.IDs)
+	if err != nil {
+		h.logger.Error("Failed to get documents by IDs", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get documents by IDs"})
 		return
 	}
 

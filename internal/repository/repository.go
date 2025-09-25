@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 
@@ -191,6 +192,46 @@ func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([
 		err := rows.Scan(
 			&doc.ID, &doc.Filename, &doc.Summary, &doc.Metadata,
 			&doc.Status, &doc.CreatedAt, &doc.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		documents = append(documents, doc)
+	}
+
+	return documents, nil
+}
+
+func (r *Repository) GetDocumentsByIDs(ctx context.Context, ids []string) ([]models.Document, error) {
+	if len(ids) == 0 {
+		return []models.Document{}, nil
+	}
+
+	// Build the IN clause with placeholders
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(`SELECT id, filename, file_type, file_path, content, summary, metadata, status, created_at, updated_at 
+			  FROM "Document" 
+			  WHERE id IN (%s)`, strings.Join(placeholders, ","))
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var documents []models.Document
+	for rows.Next() {
+		var doc models.Document
+		err := rows.Scan(
+			&doc.ID, &doc.Filename, &doc.FileType, &doc.FilePath,
+			&doc.Content, &doc.Summary, &doc.Metadata, &doc.Status,
+			&doc.CreatedAt, &doc.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err

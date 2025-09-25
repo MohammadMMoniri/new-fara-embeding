@@ -63,6 +63,12 @@ func (r *Repository) UpdateDocumentSummary(ctx context.Context, id, summary stri
 	return err
 }
 
+func (r *Repository) UpdateDocumentMetadata(ctx context.Context, id string, metadata []byte) error {
+	query := `UPDATE "Document" SET metadata = $1, updated_at = NOW() WHERE id = $2`
+	_, err := r.db.Exec(ctx, query, metadata, id)
+	return err
+}
+
 // func (r *Repository) CreateDocumentChunk(ctx context.Context, chunk *models.DocumentChunk) error {
 // 	query := `INSERT INTO "DocumentChunk"
 // 			  (id, document_id, chunk_index, content, token_count, embedding, metadata, created_at, updated_at)

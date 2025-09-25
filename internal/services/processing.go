@@ -4,6 +4,7 @@ package services
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -136,15 +137,56 @@ func (s *ProcessingService) processDocumentAsync(ctx context.Context, doc *model
 		return fmt.Errorf("failed to download file: %w", err)
 	}
 
-	// Extract text based on file type
-	extractedText, err := s.extractText(ctx, fileData, doc.FileType, doc.Filename)
-	if err != nil {
-		return fmt.Errorf("failed to extract text: %w", err)
+	// Extract text and analyze based on file type
+	var extractedText string
+	var summary string
+	var metadata []byte
+
+	if s.isImageFile(doc.FileType) {
+		// For images, use the new analyzeImage method
+		analysis, err := s.analyzeImage(ctx, fileData, doc.FileType)
+		if err != nil {
+			return fmt.Errorf("failed to analyze image: %w", err)
+		}
+
+		// Extract text content from analysis
+		if textContent, exists := analysis.Metadata["raw_text_content"]; exists {
+			extractedText = textContent
+		} else {
+			extractedText = analysis.Summary
+		}
+
+		summary = analysis.Summary
+
+		// Store only the metadata part, not the full analysis
+		metadata, err = json.Marshal(analysis.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal analysis metadata: %w", err)
+		}
+	} else {
+		// For other files, use the existing extractText method
+		extractedText, err = s.extractText(ctx, fileData, doc.FileType, doc.Filename)
+		if err != nil {
+			return fmt.Errorf("failed to extract text: %w", err)
+		}
+		summary = extractedText // Use extracted text as summary for non-image files
 	}
 
 	// Update document content
 	if err := s.repo.UpdateDocumentContent(ctx, doc.ID, extractedText); err != nil {
 		return fmt.Errorf("failed to update document content: %w", err)
+	}
+
+	// Update document summary
+	if err := s.repo.UpdateDocumentSummary(ctx, doc.ID, summary); err != nil {
+		return fmt.Errorf("failed to update document summary: %w", err)
+	}
+
+	// Update document metadata if available
+	if len(metadata) > 0 {
+		if err := s.repo.UpdateDocumentMetadata(ctx, doc.ID, metadata); err != nil {
+			return fmt.Errorf("failed to update document metadata: %w", err)
+		}
 	}
 
 	// Chunk the text
@@ -279,6 +321,25 @@ func (s *ProcessingService) extractTextFromImage(ctx context.Context, imageData 
 	}
 
 	return s.openai.ExtractTextFromImage(ctx, imageData, mimeType)
+}
+
+func (s *ProcessingService) analyzeImage(ctx context.Context, imageData []byte, fileType string) (*openai.ImageAnalysis, error) {
+	mimeType := fmt.Sprintf("image/%s", strings.ToLower(fileType))
+	if fileType == "jpg" {
+		mimeType = "image/jpeg"
+	}
+
+	return s.openai.AnalyzeImage(ctx, imageData, mimeType)
+}
+
+func (s *ProcessingService) isImageFile(fileType string) bool {
+	imageTypes := []string{"jpeg", "jpg", "png", "gif", "bmp", "webp", "tiff"}
+	for _, imgType := range imageTypes {
+		if strings.ToLower(fileType) == imgType {
+			return true
+		}
+	}
+	return false
 }
 
 // func (s *ProcessingService) chunkText(text string, chunkSize, overlap int) []string {

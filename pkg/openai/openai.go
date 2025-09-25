@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"document-embeddings/internal/config"
@@ -61,6 +62,11 @@ type ChatResponse struct {
 	} `json:"choices"`
 }
 
+type ImageAnalysis struct {
+	Summary  string            `json:"summary"`
+	Metadata map[string]string `json:"metadata"`
+}
+
 func New(cfg config.OpenAIConfig) *Client {
 	return &Client{
 		httpClient: &http.Client{
@@ -93,6 +99,21 @@ func New(cfg config.OpenAIConfig) *Client {
 // }
 
 func (c *Client) ExtractTextFromImage(ctx context.Context, imageData []byte, mimeType string) (string, error) {
+	analysis, err := c.AnalyzeImage(ctx, imageData, mimeType)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract raw text content from metadata if available
+	if textContent, exists := analysis.Metadata["raw_text_content"]; exists {
+		return textContent, nil
+	}
+
+	// Fallback to summary if no specific text content found
+	return analysis.Summary, nil
+}
+
+func (c *Client) AnalyzeImage(ctx context.Context, imageData []byte, mimeType string) (*ImageAnalysis, error) {
 	imageURL := fmt.Sprintf("data:%s;base64,%s", mimeType, encodeBase64(imageData))
 
 	req := ChatRequest{
@@ -118,7 +139,30 @@ func (c *Client) ExtractTextFromImage(ctx context.Context, imageData []byte, mim
 				}{
 					{
 						Type: "text",
-						Text: "Extract all text from this image. Return only the extracted text without any additional commentary or formatting.",
+						Text: `Analyze this image and provide:
+1. A short summary of what you see
+2. Extract ALL text content exactly as it appears in the image (do not translate, modify, or interpret)
+3. Metadata including:
+   - Image type/category
+   - Colors (dominant colors)
+   - Objects detected
+   - Mood/atmosphere
+   - Quality/technical aspects
+json
+{
+  "summary": "",
+  "raw_text_content": "",
+  "metadata": {
+    "image_type/category": "Presentation Slide",
+    "colors": ["White", "Blue", "Red", "Black"],
+    "objects_detected": ["Text", "Arrows", "Bullet Points"],
+    "mood/atmosphere": "",
+    "quality/technical_aspects": ""
+  }
+}
+
+
+Return the response as a JSON object with "summary" and "metadata" fields. In the metadata, include "raw_text_content" with the exact text as it appears in the image.`,
 					},
 					{
 						Type: "image_url",
@@ -134,14 +178,47 @@ func (c *Client) ExtractTextFromImage(ctx context.Context, imageData []byte, mim
 
 	var resp ChatResponse
 	if err := c.makeRequest(ctx, "POST", "/chat/completions", req, &resp); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if len(resp.Choices) == 0 {
-		return "", fmt.Errorf("no response from OpenAI")
+		return nil, fmt.Errorf("no response from OpenAI")
 	}
 
-	return resp.Choices[0].Message.Content, nil
+	var analysis ImageAnalysis
+	content := resp.Choices[0].Message.Content
+
+	// Remove markdown code blocks if present
+	content = strings.TrimSpace(content)
+	if strings.HasPrefix(content, "```json") {
+		content = strings.TrimPrefix(content, "```json")
+	} else if strings.HasPrefix(content, "```") {
+		content = strings.TrimPrefix(content, "```")
+	}
+	content = strings.TrimSuffix(content, "```")
+	content = strings.TrimSpace(content)
+
+	// Try to parse the cleaned JSON
+	if err := json.Unmarshal([]byte(content), &analysis); err != nil {
+		// If JSON parsing still fails, try to extract individual fields manually
+		analysis = ImageAnalysis{
+			Summary:  extractFieldFromJSON(content, "summary"),
+			Metadata: make(map[string]string),
+		}
+
+		// Extract raw_text_content if available
+		if rawText := extractFieldFromJSON(content, "raw_text_content"); rawText != "" {
+			analysis.Metadata["raw_text_content"] = rawText
+		}
+
+		// If we still can't extract anything meaningful, use the original content
+		if analysis.Summary == "" {
+			analysis.Summary = resp.Choices[0].Message.Content
+			analysis.Metadata["raw_response"] = resp.Choices[0].Message.Content
+		}
+	}
+
+	return &analysis, nil
 }
 
 func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body interface{}, response interface{}) error {
@@ -187,4 +264,63 @@ func (c *Client) makeRequest(ctx context.Context, method, endpoint string, body 
 
 func encodeBase64(data []byte) string {
 	return base64.StdEncoding.EncodeToString(data)
+}
+
+func extractFieldFromJSON(jsonStr, fieldName string) string {
+	// Simple regex-like extraction for JSON fields
+	// Look for "fieldName": "value"
+	startPattern := fmt.Sprintf(`"%s":`, fieldName)
+	startIdx := strings.Index(jsonStr, startPattern)
+	if startIdx == -1 {
+		return ""
+	}
+
+	// Find the start of the value (after the colon and optional whitespace)
+	valueStart := startIdx + len(startPattern)
+	// Skip whitespace
+	for valueStart < len(jsonStr) && (jsonStr[valueStart] == ' ' || jsonStr[valueStart] == '\t') {
+		valueStart++
+	}
+
+	// Find the end of the value (handle both string and object values)
+	if valueStart >= len(jsonStr) {
+		return ""
+	}
+
+	// If it's a string value (starts with quote)
+	if jsonStr[valueStart] == '"' {
+		valueStart++ // Skip opening quote
+		// Find the closing quote, handling escaped quotes
+		valueEnd := valueStart
+		for valueEnd < len(jsonStr) {
+			if jsonStr[valueEnd] == '"' && (valueEnd == valueStart || jsonStr[valueEnd-1] != '\\') {
+				break
+			}
+			valueEnd++
+		}
+		if valueEnd < len(jsonStr) {
+			return jsonStr[valueStart:valueEnd]
+		}
+	} else if jsonStr[valueStart] == '{' {
+		// If it's an object, find the matching closing brace
+		braceCount := 0
+		valueEnd := valueStart
+		for valueEnd < len(jsonStr) {
+			if jsonStr[valueEnd] == '{' {
+				braceCount++
+			} else if jsonStr[valueEnd] == '}' {
+				braceCount--
+				if braceCount == 0 {
+					valueEnd++
+					break
+				}
+			}
+			valueEnd++
+		}
+		if braceCount == 0 {
+			return jsonStr[valueStart:valueEnd]
+		}
+	}
+
+	return ""
 }

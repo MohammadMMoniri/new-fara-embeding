@@ -11,6 +11,7 @@ type Document struct {
 	FileType  string    `json:"fileType" db:"file_type"`
 	FilePath  string    `json:"filePath" db:"file_path"`
 	Content   *string   `json:"content" db:"content"`
+	Summary   *string   `json:"summary" db:"summary"`
 	Metadata  []byte    `json:"metadata" db:"metadata"`
 	Status    string    `json:"status" db:"status"`
 	UserID    string    `json:"userId" db:"user_id"`

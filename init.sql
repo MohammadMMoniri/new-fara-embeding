@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "Document" (
     file_type VARCHAR(50) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
     content TEXT,
+    summary TEXT,
     metadata JSONB,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
     user_id VARCHAR(255) NOT NULL,

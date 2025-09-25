@@ -73,24 +73,24 @@ func New(cfg config.OpenAIConfig) *Client {
 	}
 }
 
-func (c *Client) GenerateEmbeddings(ctx context.Context, texts []string) ([][]float32, error) {
-	req := EmbeddingRequest{
-		Input: texts,
-		Model: c.model,
-	}
+// func (c *Client) GenerateEmbeddings(ctx context.Context, texts []string) ([][]float32, error) {
+// 	req := EmbeddingRequest{
+// 		Input: texts,
+// 		Model: c.model,
+// 	}
 
-	var resp EmbeddingResponse
-	if err := c.makeRequest(ctx, "POST", "/embeddings", req, &resp); err != nil {
-		return nil, err
-	}
+// 	var resp EmbeddingResponse
+// 	if err := c.makeRequest(ctx, "POST", "/embeddings", req, &resp); err != nil {
+// 		return nil, err
+// 	}
 
-	embeddings := make([][]float32, len(resp.Data))
-	for _, data := range resp.Data {
-		embeddings[data.Index] = data.Embedding
-	}
+// 	embeddings := make([][]float32, len(resp.Data))
+// 	for _, data := range resp.Data {
+// 		embeddings[data.Index] = data.Embedding
+// 	}
 
-	return embeddings, nil
-}
+// 	return embeddings, nil
+// }
 
 func (c *Client) ExtractTextFromImage(ctx context.Context, imageData []byte, mimeType string) (string, error) {
 	imageURL := fmt.Sprintf("data:%s;base64,%s", mimeType, encodeBase64(imageData))

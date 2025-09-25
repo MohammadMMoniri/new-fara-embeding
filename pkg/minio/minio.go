@@ -25,6 +25,20 @@ func New(cfg config.MinIOConfig) (*Client, error) {
 		return nil, err
 	}
 
+	// Create bucket if it doesn't exist
+	ctx := context.Background()
+	exists, err := client.BucketExists(ctx, cfg.BucketName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		err = client.MakeBucket(ctx, cfg.BucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &Client{
 		Client:     client,
 		BucketName: cfg.BucketName,

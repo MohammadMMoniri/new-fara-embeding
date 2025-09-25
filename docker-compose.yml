@@ -1,17 +1,17 @@
 version: '3.8'
 
 services:
-  # postgres:
-  #   image: pgvector/pgvector:pg16
-  #   environment:
-  #     POSTGRES_DB: embeddings
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: password
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: embeddings
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "35432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   minio:
     image: minio/minio:latest
@@ -28,19 +28,20 @@ services:
   embedding-service:
     build: .
     environment:
-      - DATABASE_URL=postgres://postgres:password@localhost:35432/embeddings?sslmode=disable
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/embeddings?sslmode=disable
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_USE_SSL=false
       - MINIO_BUCKET=documents
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_KEY=aa-u7IAZE6Pf8IiCmbt1Xd2PY5VFOadi7kMtREvYBefB9hrwytT
       - OPENAI_MODEL=text-embedding-3-small
       - LOG_LEVEL=info
     ports:
       - "8080:8080"
     depends_on:
       - minio
+    restart: always
 
 volumes:
   postgres_data:

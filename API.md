@@ -24,6 +24,20 @@
 - `documentId` (string) - Document ID
 - `file` (file) - Document file (PDF, images)
 
+**Supported File Types:**
+- PDF: `application/pdf`
+- Images: `image/jpeg`, `image/png`, `image/gif`, `image/bmp`, `image/webp`, `image/tiff`
+
+**Processing Workflow:**
+1. File uploaded to MinIO storage
+2. Document record created in database (status: "pending")
+3. Status updated to "processing"
+4. Background processing starts:
+   - **PDFs**: Converted to images → OpenAI OCR → Text extraction
+   - **Images**: Direct OpenAI OCR → Text extraction
+5. Extracted text stored in database
+6. Status updated to "processed"
+
 **Output:**
 ```json
 {
@@ -32,6 +46,12 @@
   "filename": "document.pdf"
 }
 ```
+
+**Processing Status:**
+- `pending` - Document queued for processing
+- `processing` - Currently being processed
+- `processed` - Successfully completed
+- `failed` - Processing failed
 
 ---
 

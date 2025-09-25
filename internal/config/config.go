@@ -31,9 +31,9 @@ type MinIOConfig struct {
 }
 
 type OpenAIConfig struct {
-	APIKey   string
-	BaseURL  string
-	Model    string
+	APIKey     string
+	BaseURL    string
+	Model      string
 	MaxRetries int
 }
 
@@ -54,7 +54,7 @@ func Load() *Config {
 		},
 		OpenAI: OpenAIConfig{
 			APIKey:     getEnv("OPENAI_API_KEY", ""),
-			BaseURL:    getEnv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+			BaseURL:    getEnv("OPENAI_BASE_URL", "https://api.avalai.ir/v1"),
 			Model:      getEnv("OPENAI_MODEL", "text-embedding-3-small"),
 			MaxRetries: getEnvAsInt("OPENAI_MAX_RETRIES", 3),
 		},
@@ -86,4 +86,3 @@ func getEnvAsBool(key string, defaultValue bool) bool {
 	}
 	return defaultValue
 }
-

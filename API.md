@@ -21,8 +21,7 @@
 **POST** `/api/v1/process`
 
 **Input:** `multipart/form-data`
-- `documentId` (string) - Document ID from external service
-- `userId` (string) - User identifier
+- `documentId` (string) - Document ID
 - `file` (file) - Document file (PDF, images)
 
 **Output:**
@@ -44,39 +43,29 @@
 **Output:**
 ```json
 {
-  "status": "processed",
-  "chunkCount": 15
+  "status": "processed"
 }
 ```
 
 ---
 
-### 4. Search Documents
-**POST** `/api/v1/search`
+### 4. List Documents
+**GET** `/api/v1/documents`
 
-**Input:**
-```json
-{
-  "query": "search query",
-  "userId": "user-456",
-  "limit": 10,
-  "filters": {}
-}
-```
+**Input:** None
 
 **Output:**
 ```json
 {
-  "results": [
+  "documents": [
     {
-      "id": "chunk-123",
-      "documentId": "doc-123",
-      "content": "chunk content...",
-      "similarity": 0.95,
-      "document": {
-        "filename": "document.pdf",
-        "fileType": "pdf"
-      }
+      "id": "doc-123",
+      "filename": "document.pdf",
+      "summary": "Document summary...",
+      "metadata": {...},
+      "status": "processed",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
     }
   ],
   "total": 1
@@ -85,23 +74,34 @@
 
 ---
 
-### 5. Get Document Chunks
-**GET** `/api/v1/documents/{id}/chunks`
+### 5. Get Documents by IDs
+**POST** `/api/v1/documents/batch`
 
-**Input:** Path parameter `id` (document ID)
+**Input:**
+```json
+{
+  "ids": ["doc-1", "doc-2", "doc-3"]
+}
+```
 
 **Output:**
 ```json
 {
-  "chunks": [
+  "documents": [
     {
-      "id": "chunk-123",
-      "content": "chunk content...",
-      "chunkIndex": 0,
-      "tokenCount": 150
+      "id": "doc-1",
+      "filename": "document1.pdf",
+      "fileType": "pdf",
+      "filePath": "documents/document1.pdf",
+      "content": "Full document content...",
+      "summary": "Document summary...",
+      "metadata": {...},
+      "status": "processed",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
     }
   ],
-  "total": 15
+  "total": 1
 }
 ```
 
@@ -123,17 +123,49 @@
 ## Example Usage
 
 ```bash
+# Health check
+curl -X GET http://localhost:8080/api/v1/health
+
 # Upload document
 curl -X POST http://localhost:8080/api/v1/process \
   -F 'documentId=doc-123' \
-  -F 'userId=user-456' \
   -F 'file=@document.pdf'
 
 # Check status
 curl -X GET http://localhost:8080/api/v1/process/doc-123/status
 
-# Search
-curl -X POST http://localhost:8080/api/v1/search \
+# List all documents
+curl -X GET http://localhost:8080/api/v1/documents
+
+# Get documents by IDs
+curl -X POST http://localhost:8080/api/v1/documents/batch \
   -H "Content-Type: application/json" \
-  -d '{"query": "machine learning", "userId": "user-456"}'
+  -d '{"ids": ["doc-1", "doc-2", "doc-3"]}'
+
+# Delete document
+curl -X DELETE http://localhost:8080/api/v1/documents/doc-123
 ```
+
+## Document Model
+
+```json
+{
+  "id": "string",
+  "filename": "string",
+  "fileType": "string",
+  "filePath": "string",
+  "content": "string",
+  "summary": "string",
+  "metadata": "object",
+  "status": "string",
+  "createdAt": "datetime",
+  "updatedAt": "datetime"
+}
+```
+
+## Status Values
+
+- `pending` - Document is queued for processing
+- `processing` - Document is currently being processed
+- `processed` - Document has been successfully processed
+- `failed` - Document processing failed

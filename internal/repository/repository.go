@@ -25,13 +25,13 @@ func New(db *database.DB, logger *logger.Logger) *Repository {
 }
 
 func (r *Repository) GetDocumentByID(ctx context.Context, id string) (*models.Document, error) {
-	query := `SELECT id, filename, file_type, file_path, content, summary, metadata, status, user_id, created_at, updated_at 
+	query := `SELECT id, filename, file_type, file_path, content, summary, metadata, status, created_at, updated_at 
 			  FROM "Document" WHERE id = $1`
 
 	var doc models.Document
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&doc.ID, &doc.Filename, &doc.FileType, &doc.FilePath,
-		&doc.Content, &doc.Summary, &doc.Metadata, &doc.Status, &doc.UserID,
+		&doc.Content, &doc.Summary, &doc.Metadata, &doc.Status,
 		&doc.CreatedAt, &doc.UpdatedAt,
 	)
 	if err != nil {
@@ -203,12 +203,12 @@ func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([
 
 func (r *Repository) CreateDocument(ctx context.Context, doc *models.Document) error {
 	query := `INSERT INTO "Document" 
-			  (id, filename, file_type, file_path, content, summary, metadata, status, user_id, created_at, updated_at)
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())`
+			  (id, filename, file_type, file_path, content, summary, metadata, status, created_at, updated_at)
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`
 
 	_, err := r.db.Exec(ctx, query,
 		doc.ID, doc.Filename, doc.FileType, doc.FilePath,
-		doc.Content, doc.Summary, doc.Metadata, doc.Status, doc.UserID,
+		doc.Content, doc.Summary, doc.Metadata, doc.Status,
 	)
 	return err
 }

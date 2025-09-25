@@ -67,7 +67,7 @@ func (s *ProcessingService) ProcessDocument(ctx context.Context, documentID stri
 	return nil
 }
 
-func (s *ProcessingService) ProcessDocumentWithFile(ctx context.Context, documentID, userID string, file *multipart.FileHeader) error {
+func (s *ProcessingService) ProcessDocumentWithFile(ctx context.Context, documentID string, file *multipart.FileHeader) error {
 	// Check if document already exists and is processing
 	existingDoc, err := s.repo.GetDocumentByID(ctx, documentID)
 	if err == nil && existingDoc.Status == "processing" {
@@ -94,7 +94,7 @@ func (s *ProcessingService) ProcessDocumentWithFile(ctx context.Context, documen
 	}
 
 	// Upload file to MinIO
-	filePath := fmt.Sprintf("documents/%s/%s", userID, file.Filename)
+	filePath := fmt.Sprintf("documents/%s", file.Filename)
 	if err := s.uploadFileToMinIO(ctx, filePath, fileData, file.Header.Get("Content-Type")); err != nil {
 		return fmt.Errorf("failed to upload file to MinIO: %w", err)
 	}
@@ -106,7 +106,6 @@ func (s *ProcessingService) ProcessDocumentWithFile(ctx context.Context, documen
 		FileType: fileType,
 		FilePath: filePath,
 		Status:   "pending",
-		UserID:   userID,
 	}
 
 	// Insert document into database

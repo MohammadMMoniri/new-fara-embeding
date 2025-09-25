@@ -14,7 +14,6 @@ type Document struct {
 	Summary   *string   `json:"summary" db:"summary"`
 	Metadata  []byte    `json:"metadata" db:"metadata"`
 	Status    string    `json:"status" db:"status"`
-	UserID    string    `json:"userId" db:"user_id"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }

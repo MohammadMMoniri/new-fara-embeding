@@ -45,10 +45,9 @@ func (h *Handler) HealthCheck(c *gin.Context) {
 func (h *Handler) ProcessDocument(c *gin.Context) {
 	// Get form data
 	documentID := c.PostForm("documentId")
-	userID := c.PostForm("userId")
 
-	if documentID == "" || userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "documentId and userId are required"})
+	if documentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "documentId is required"})
 		return
 	}
 
@@ -77,7 +76,7 @@ func (h *Handler) ProcessDocument(c *gin.Context) {
 	}
 
 	// Process the document with file upload
-	if err := h.services.Processing.ProcessDocumentWithFile(c.Request.Context(), documentID, userID, file); err != nil {
+	if err := h.services.Processing.ProcessDocumentWithFile(c.Request.Context(), documentID, file); err != nil {
 		h.logger.Error("Failed to process document", "documentId", documentID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start document processing"})
 		return

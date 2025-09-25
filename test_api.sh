@@ -15,19 +15,17 @@ echo "2. Process Document:"
 echo "Note: This requires a file upload. Example curl command:"
 echo "curl -X POST http://localhost:8080/api/v1/process \\"
 echo "  -F 'documentId=test-doc-123' \\"
-echo "  -F 'userId=user-456' \\"
 echo "  -F 'file=@/path/to/your/document.pdf'"
 echo -e "\n"
 
-# Search documents
-echo "3. Search Documents:"
-curl -X POST http://localhost:8080/api/v1/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "example search query",
-    "userId": "user-456",
-    "limit": 10
-  }'
+# List documents
+echo "3. List Documents:"
+curl -X GET "http://localhost:8080/api/v1/documents"
 echo -e "\n\n"
+
+# Search documents (commented out since search is disabled)
+echo "4. Search Documents (disabled):"
+echo "Note: Search functionality is currently commented out"
+echo -e "\n"
 
 echo "API Test Complete!"

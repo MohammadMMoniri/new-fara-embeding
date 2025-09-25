@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS "Document" (
     summary TEXT,
     metadata JSONB,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
-    user_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -31,7 +30,6 @@ CREATE TABLE IF NOT EXISTS "Document" (
 -- );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_document_user_id ON "Document"(user_id);
 CREATE INDEX IF NOT EXISTS idx_document_status ON "Document"(status);
 -- CREATE INDEX IF NOT EXISTS idx_document_chunk_document_id ON "DocumentChunk"(document_id);
 -- CREATE INDEX IF NOT EXISTS idx_document_chunk_embedding ON "DocumentChunk" USING hnsw (embedding vector_cosine_ops);

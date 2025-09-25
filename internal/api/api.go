@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"document-embeddings/internal/models"
 	"document-embeddings/internal/services"
 	"document-embeddings/pkg/logger"
 )
@@ -29,8 +28,8 @@ func RegisterRoutes(r *gin.Engine, h *Handler) {
 		api.GET("/health", h.HealthCheck)
 		api.POST("/process", h.ProcessDocument)
 		api.GET("/process/:id/status", h.GetProcessingStatus)
-		api.POST("/search", h.SearchDocuments)
-		api.GET("/documents/:id/chunks", h.GetDocumentChunks)
+		// api.POST("/search", h.SearchDocuments)
+		// api.GET("/documents/:id/chunks", h.GetDocumentChunks)
 		api.DELETE("/documents/:id", h.DeleteDocument)
 	}
 }
@@ -103,51 +102,51 @@ func (h *Handler) GetProcessingStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, status)
 }
 
-func (h *Handler) SearchDocuments(c *gin.Context) {
-	var req struct {
-		Query   string                 `json:"query" binding:"required"`
-		Limit   int                    `json:"limit"`
-		UserID  string                 `json:"userId" binding:"required"`
-		Filters map[string]interface{} `json:"filters"`
-	}
+// func (h *Handler) SearchDocuments(c *gin.Context) {
+// 	var req struct {
+// 		Query   string                 `json:"query" binding:"required"`
+// 		Limit   int                    `json:"limit"`
+// 		UserID  string                 `json:"userId" binding:"required"`
+// 		Filters map[string]interface{} `json:"filters"`
+// 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+// 	if err := c.ShouldBindJSON(&req); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
 
-	searchReq := &models.SearchRequest{
-		Query:   req.Query,
-		Limit:   req.Limit,
-		UserID:  req.UserID,
-		Filters: req.Filters,
-	}
+// 	searchReq := &models.SearchRequest{
+// 		Query:   req.Query,
+// 		Limit:   req.Limit,
+// 		UserID:  req.UserID,
+// 		Filters: req.Filters,
+// 	}
 
-	results, err := h.services.Search.SearchSimilarDocuments(c.Request.Context(), searchReq)
-	if err != nil {
-		h.logger.Error("Failed to search documents", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search documents"})
-		return
-	}
+// 	results, err := h.services.Search.SearchSimilarDocuments(c.Request.Context(), searchReq)
+// 	if err != nil {
+// 		h.logger.Error("Failed to search documents", "error", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search documents"})
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, results)
-}
+// 	c.JSON(http.StatusOK, results)
+// }
 
-func (h *Handler) GetDocumentChunks(c *gin.Context) {
-	documentID := c.Param("id")
+// func (h *Handler) GetDocumentChunks(c *gin.Context) {
+// 	documentID := c.Param("id")
 
-	chunks, err := h.services.Search.GetDocumentChunks(c.Request.Context(), documentID)
-	if err != nil {
-		h.logger.Error("Failed to get document chunks", "documentId", documentID, "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get document chunks"})
-		return
-	}
+// 	chunks, err := h.services.Search.GetDocumentChunks(c.Request.Context(), documentID)
+// 	if err != nil {
+// 		h.logger.Error("Failed to get document chunks", "documentId", documentID, "error", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get document chunks"})
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"chunks": chunks,
-		"total":  len(chunks),
-	})
-}
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"chunks": chunks,
+// 		"total":  len(chunks),
+// 	})
+// }
 
 func (h *Handler) DeleteDocument(c *gin.Context) {
 	documentID := c.Param("id")

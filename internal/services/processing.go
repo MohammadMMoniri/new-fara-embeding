@@ -4,7 +4,6 @@ package services
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -12,9 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 
 	"document-embeddings/internal/config"
@@ -152,48 +149,48 @@ func (s *ProcessingService) processDocumentAsync(ctx context.Context, doc *model
 	}
 
 	// Chunk the text
-	chunks := s.chunkText(extractedText, 1000, 200) // 1000 chars with 200 overlap
+	// chunks := s.chunkText(extractedText, 1000, 200) // 1000 chars with 200 overlap
 
 	// Generate embeddings and store chunks
-	for i, chunkContent := range chunks {
-		chunkID := uuid.New().String()
+	// for i, chunkContent := range chunks {
+	// 	chunkID := uuid.New().String()
 
-		// Generate embedding
-		embeddings, err := s.openai.GenerateEmbeddings(ctx, []string{chunkContent})
-		if err != nil {
-			return fmt.Errorf("failed to generate embedding for chunk %d: %w", i, err)
-		}
+	// 	// Generate embedding
+	// 	embeddings, err := s.openai.GenerateEmbeddings(ctx, []string{chunkContent})
+	// 	if err != nil {
+	// 		return fmt.Errorf("failed to generate embedding for chunk %d: %w", i, err)
+	// 	}
 
-		// Create chunk metadata
-		metadata := map[string]interface{}{
-			"chunk_index": i,
-			"token_count": len(strings.Fields(chunkContent)),
-			"created_at":  time.Now(),
-		}
-		metadataJSON, _ := json.Marshal(metadata)
+	// 	// Create chunk metadata
+	// 	metadata := map[string]interface{}{
+	// 		"chunk_index": i,
+	// 		"token_count": len(strings.Fields(chunkContent)),
+	// 		"created_at":  time.Now(),
+	// 	}
+	// 	metadataJSON, _ := json.Marshal(metadata)
 
-		// Create document chunk
-		chunk := &models.DocumentChunk{
-			ID:         chunkID,
-			DocumentID: doc.ID,
-			ChunkIndex: i,
-			Content:    chunkContent,
-			TokenCount: &[]int{len(strings.Fields(chunkContent))}[0],
-			Embedding:  embeddings[0],
-			Metadata:   metadataJSON,
-		}
+	// 	// Create document chunk
+	// 	chunk := &models.DocumentChunk{
+	// 		ID:         chunkID,
+	// 		DocumentID: doc.ID,
+	// 		ChunkIndex: i,
+	// 		Content:    chunkContent,
+	// 		TokenCount: &[]int{len(strings.Fields(chunkContent))}[0],
+	// 		Embedding:  embeddings[0],
+	// 		Metadata:   metadataJSON,
+	// 	}
 
-		if err := s.repo.CreateDocumentChunk(ctx, chunk); err != nil {
-			return fmt.Errorf("failed to create document chunk: %w", err)
-		}
-	}
+	// 	if err := s.repo.CreateDocumentChunk(ctx, chunk); err != nil {
+	// 		return fmt.Errorf("failed to create document chunk: %w", err)
+	// 	}
+	// }
 
 	// Update document status to processed
 	if err := s.repo.UpdateDocumentStatus(ctx, doc.ID, "processed"); err != nil {
 		return fmt.Errorf("failed to update document status: %w", err)
 	}
 
-	s.logger.Info("Document processed successfully", "documentId", doc.ID, "chunks", len(chunks))
+	s.logger.Info("Document processed successfully", "documentId", doc.ID)
 	return nil
 }
 
@@ -285,39 +282,39 @@ func (s *ProcessingService) extractTextFromImage(ctx context.Context, imageData 
 	return s.openai.ExtractTextFromImage(ctx, imageData, mimeType)
 }
 
-func (s *ProcessingService) chunkText(text string, chunkSize, overlap int) []string {
-	if len(text) <= chunkSize {
-		return []string{text}
-	}
+// func (s *ProcessingService) chunkText(text string, chunkSize, overlap int) []string {
+// 	if len(text) <= chunkSize {
+// 		return []string{text}
+// 	}
 
-	var chunks []string
-	start := 0
+// 	var chunks []string
+// 	start := 0
 
-	for start < len(text) {
-		end := start + chunkSize
-		if end > len(text) {
-			end = len(text)
-		}
+// 	for start < len(text) {
+// 		end := start + chunkSize
+// 		if end > len(text) {
+// 			end = len(text)
+// 		}
 
-		// Find a good breaking point (space or newline)
-		if end < len(text) {
-			for i := end; i > start+chunkSize/2 && i < len(text); i-- {
-				if text[i] == ' ' || text[i] == '\n' || text[i] == '.' {
-					end = i + 1
-					break
-				}
-			}
-		}
+// 		// Find a good breaking point (space or newline)
+// 		if end < len(text) {
+// 			for i := end; i > start+chunkSize/2 && i < len(text); i-- {
+// 				if text[i] == ' ' || text[i] == '\n' || text[i] == '.' {
+// 					end = i + 1
+// 					break
+// 				}
+// 			}
+// 		}
 
-		chunks = append(chunks, strings.TrimSpace(text[start:end]))
-		start = end - overlap
-		if start < 0 {
-			start = 0
-		}
-	}
+// 		chunks = append(chunks, strings.TrimSpace(text[start:end]))
+// 		start = end - overlap
+// 		if start < 0 {
+// 			start = 0
+// 		}
+// 	}
 
-	return chunks
-}
+// 	return chunks
+// }
 
 func (s *ProcessingService) GetProcessingStatus(ctx context.Context, documentID string) (*models.StatusResponse, error) {
 	doc, err := s.repo.GetDocumentByID(ctx, documentID)
@@ -325,14 +322,14 @@ func (s *ProcessingService) GetProcessingStatus(ctx context.Context, documentID 
 		return nil, fmt.Errorf("failed to get document: %w", err)
 	}
 
-	chunkCount, err := s.repo.GetDocumentChunkCount(ctx, documentID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get chunk count: %w", err)
-	}
+	// chunkCount, err := s.repo.GetDocumentChunkCount(ctx, documentID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get chunk count: %w", err)
+	// }
 
 	return &models.StatusResponse{
-		Status:     doc.Status,
-		ChunkCount: chunkCount,
+		Status: doc.Status,
+		// ChunkCount: chunkCount,
 	}, nil
 }
 

@@ -56,86 +56,86 @@ func (r *Repository) UpdateDocumentContent(ctx context.Context, id, content stri
 	return err
 }
 
-func (r *Repository) CreateDocumentChunk(ctx context.Context, chunk *models.DocumentChunk) error {
-	query := `INSERT INTO "DocumentChunk" 
-			  (id, document_id, chunk_index, content, token_count, embedding, metadata, created_at, updated_at)
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`
+// func (r *Repository) CreateDocumentChunk(ctx context.Context, chunk *models.DocumentChunk) error {
+// 	query := `INSERT INTO "DocumentChunk"
+// 			  (id, document_id, chunk_index, content, token_count, embedding, metadata, created_at, updated_at)
+// 			  VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`
 
-	_, err := r.db.Exec(ctx, query,
-		chunk.ID, chunk.DocumentID, chunk.ChunkIndex, chunk.Content,
-		chunk.TokenCount, chunk.Embedding, chunk.Metadata,
-	)
-	return err
-}
+// 	_, err := r.db.Exec(ctx, query,
+// 		chunk.ID, chunk.DocumentID, chunk.ChunkIndex, chunk.Content,
+// 		chunk.TokenCount, chunk.Embedding, chunk.Metadata,
+// 	)
+// 	return err
+// }
 
-func (r *Repository) GetDocumentChunks(ctx context.Context, documentID string) ([]models.DocumentChunk, error) {
-	query := `SELECT id, document_id, chunk_index, content, token_count, embedding, metadata, created_at, updated_at
-			  FROM "DocumentChunk" WHERE document_id = $1 ORDER BY chunk_index`
+// func (r *Repository) GetDocumentChunks(ctx context.Context, documentID string) ([]models.DocumentChunk, error) {
+// 	query := `SELECT id, document_id, chunk_index, content, token_count, embedding, metadata, created_at, updated_at
+// 			  FROM "DocumentChunk" WHERE document_id = $1 ORDER BY chunk_index`
 
-	rows, err := r.db.Query(ctx, query, documentID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// 	rows, err := r.db.Query(ctx, query, documentID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	var chunks []models.DocumentChunk
-	for rows.Next() {
-		var chunk models.DocumentChunk
-		err := rows.Scan(
-			&chunk.ID, &chunk.DocumentID, &chunk.ChunkIndex, &chunk.Content,
-			&chunk.TokenCount, &chunk.Embedding, &chunk.Metadata,
-			&chunk.CreatedAt, &chunk.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		chunks = append(chunks, chunk)
-	}
+// 	var chunks []models.DocumentChunk
+// 	for rows.Next() {
+// 		var chunk models.DocumentChunk
+// 		err := rows.Scan(
+// 			&chunk.ID, &chunk.DocumentID, &chunk.ChunkIndex, &chunk.Content,
+// 			&chunk.TokenCount, &chunk.Embedding, &chunk.Metadata,
+// 			&chunk.CreatedAt, &chunk.UpdatedAt,
+// 		)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		chunks = append(chunks, chunk)
+// 	}
 
-	return chunks, nil
-}
+// 	return chunks, nil
+// }
 
-func (r *Repository) SearchSimilarChunks(ctx context.Context, embedding []float32, limit int, userID string) ([]models.DocumentChunk, error) {
-	query := `SELECT c.id, c.document_id, c.chunk_index, c.content, c.token_count, 
-					 c.embedding, c.metadata, c.created_at, c.updated_at,
-					 d.filename, d.file_type, d.user_id,
-					 1 - (c.embedding <=> $1::vector) as similarity
-			  FROM "DocumentChunk" c
-			  JOIN "Document" d ON c.document_id = d.id
-			  WHERE d.user_id = $2 AND d.status = 'processed'
-			  ORDER BY c.embedding <=> $1::vector
-			  LIMIT $3`
+// func (r *Repository) SearchSimilarChunks(ctx context.Context, embedding []float32, limit int, userID string) ([]models.DocumentChunk, error) {
+// 	query := `SELECT c.id, c.document_id, c.chunk_index, c.content, c.token_count,
+// 				 c.embedding, c.metadata, c.created_at, c.updated_at,
+// 				 d.filename, d.file_type, d.user_id,
+// 				 1 - (c.embedding <=> $1::vector) as similarity
+// 			  FROM "DocumentChunk" c
+// 			  JOIN "Document" d ON c.document_id = d.id
+// 			  WHERE d.user_id = $2 AND d.status = 'processed'
+// 			  ORDER BY c.embedding <=> $1::vector
+// 			  LIMIT $3`
 
-	rows, err := r.db.Query(ctx, query, embedding, userID, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// 	rows, err := r.db.Query(ctx, query, embedding, userID, limit)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	var chunks []models.DocumentChunk
-	for rows.Next() {
-		var chunk models.DocumentChunk
-		var doc models.Document
-		var similarity float64
+// 	var chunks []models.DocumentChunk
+// 	for rows.Next() {
+// 		var chunk models.DocumentChunk
+// 		var doc models.Document
+// 		var similarity float64
 
-		err := rows.Scan(
-			&chunk.ID, &chunk.DocumentID, &chunk.ChunkIndex, &chunk.Content,
-			&chunk.TokenCount, &chunk.Embedding, &chunk.Metadata,
-			&chunk.CreatedAt, &chunk.UpdatedAt,
-			&doc.Filename, &doc.FileType, &doc.UserID,
-			&similarity,
-		)
-		if err != nil {
-			return nil, err
-		}
+// 		err := rows.Scan(
+// 			&chunk.ID, &chunk.DocumentID, &chunk.ChunkIndex, &chunk.Content,
+// 			&chunk.TokenCount, &chunk.Embedding, &chunk.Metadata,
+// 			&chunk.CreatedAt, &chunk.UpdatedAt,
+// 			&doc.Filename, &doc.FileType, &doc.UserID,
+// 			&similarity,
+// 		)
+// 		if err != nil {
+// 			return nil, err
+// 		}
 
-		chunk.Document = &doc
-		chunk.Similarity = &similarity
-		chunks = append(chunks, chunk)
-	}
+// 		chunk.Document = &doc
+// 		chunk.Similarity = &similarity
+// 		chunks = append(chunks, chunk)
+// 	}
 
-	return chunks, nil
-}
+// 	return chunks, nil
+// }
 
 func (r *Repository) DeleteDocument(ctx context.Context, id string) error {
 	tx, err := r.db.Begin(ctx)
@@ -145,10 +145,10 @@ func (r *Repository) DeleteDocument(ctx context.Context, id string) error {
 	defer tx.Rollback(ctx)
 
 	// Delete chunks first (foreign key constraint)
-	_, err = tx.Exec(ctx, `DELETE FROM "DocumentChunk" WHERE document_id = $1`, id)
-	if err != nil {
-		return err
-	}
+	// _, err = tx.Exec(ctx, `DELETE FROM "DocumentChunk" WHERE document_id = $1`, id)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// Delete document
 	_, err = tx.Exec(ctx, `DELETE FROM "Document" WHERE id = $1`, id)
@@ -159,12 +159,12 @@ func (r *Repository) DeleteDocument(ctx context.Context, id string) error {
 	return tx.Commit(ctx)
 }
 
-func (r *Repository) GetDocumentChunkCount(ctx context.Context, documentID string) (int, error) {
-	var count int
-	query := `SELECT COUNT(*) FROM "DocumentChunk" WHERE document_id = $1`
-	err := r.db.QueryRow(ctx, query, documentID).Scan(&count)
-	return count, err
-}
+// func (r *Repository) GetDocumentChunkCount(ctx context.Context, documentID string) (int, error) {
+// 	var count int
+// 	query := `SELECT COUNT(*) FROM "DocumentChunk" WHERE document_id = $1`
+// 	err := r.db.QueryRow(ctx, query, documentID).Scan(&count)
+// 	return count, err
+// }
 
 func (r *Repository) CreateDocument(ctx context.Context, doc *models.Document) error {
 	query := `INSERT INTO "Document" 

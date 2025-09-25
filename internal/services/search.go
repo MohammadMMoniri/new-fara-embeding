@@ -3,9 +3,7 @@ package services
 
 import (
 	"context"
-	"fmt"
 
-	"document-embeddings/internal/models"
 	"document-embeddings/internal/repository"
 	"document-embeddings/pkg/logger"
 	"document-embeddings/pkg/openai"
@@ -25,34 +23,34 @@ func NewSearchService(repo *repository.Repository, openai *openai.Client, logger
 	}
 }
 
-func (s *SearchService) SearchSimilarDocuments(ctx context.Context, req *models.SearchRequest) (*models.SearchResponse, error) {
-	// Generate embedding for query
-	embeddings, err := s.openai.GenerateEmbeddings(ctx, []string{req.Query})
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate query embedding: %w", err)
-	}
+// func (s *SearchService) SearchSimilarDocuments(ctx context.Context, req *models.SearchRequest) (*models.SearchResponse, error) {
+// 	// Generate embedding for query
+// 	embeddings, err := s.openai.GenerateEmbeddings(ctx, []string{req.Query})
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to generate query embedding: %w", err)
+// 	}
 
-	// Set default limit
-	limit := req.Limit
-	if limit <= 0 || limit > 100 {
-		limit = 20
-	}
+// 	// Set default limit
+// 	limit := req.Limit
+// 	if limit <= 0 || limit > 100 {
+// 		limit = 20
+// 	}
 
-	// Search for similar chunks
-	chunks, err := s.repo.SearchSimilarChunks(ctx, embeddings[0], limit, req.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to search similar chunks: %w", err)
-	}
+// 	// Search for similar chunks
+// 	chunks, err := s.repo.SearchSimilarChunks(ctx, embeddings[0], limit, req.UserID)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to search similar chunks: %w", err)
+// 	}
 
-	return &models.SearchResponse{
-		Results: chunks,
-		Total:   len(chunks),
-	}, nil
-}
+// 	return &models.SearchResponse{
+// 		Results: chunks,
+// 		Total:   len(chunks),
+// 	}, nil
+// }
 
-func (s *SearchService) GetDocumentChunks(ctx context.Context, documentID string) ([]models.DocumentChunk, error) {
-	return s.repo.GetDocumentChunks(ctx, documentID)
-}
+// func (s *SearchService) GetDocumentChunks(ctx context.Context, documentID string) ([]models.DocumentChunk, error) {
+// 	return s.repo.GetDocumentChunks(ctx, documentID)
+// }
 
 func (s *SearchService) DeleteDocument(ctx context.Context, documentID string) error {
 	return s.repo.DeleteDocument(ctx, documentID)

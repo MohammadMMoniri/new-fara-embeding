@@ -17,23 +17,23 @@ CREATE TABLE IF NOT EXISTS "Document" (
 );
 
 -- Create DocumentChunk table
-CREATE TABLE IF NOT EXISTS "DocumentChunk" (
-    id VARCHAR(255) PRIMARY KEY,
-    document_id VARCHAR(255) NOT NULL REFERENCES "Document"(id) ON DELETE CASCADE,
-    chunk_index INTEGER NOT NULL,
-    content TEXT NOT NULL,
-    token_count INTEGER,
-    embedding vector(1536),
-    metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- CREATE TABLE IF NOT EXISTS "DocumentChunk" (
+--     id VARCHAR(255) PRIMARY KEY,
+--     document_id VARCHAR(255) NOT NULL REFERENCES "Document"(id) ON DELETE CASCADE,
+--     chunk_index INTEGER NOT NULL,
+--     content TEXT NOT NULL,
+--     token_count INTEGER,
+--     embedding vector(1536),
+--     metadata JSONB,
+--     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+--     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- );
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_document_user_id ON "Document"(user_id);
 CREATE INDEX IF NOT EXISTS idx_document_status ON "Document"(status);
-CREATE INDEX IF NOT EXISTS idx_document_chunk_document_id ON "DocumentChunk"(document_id);
-CREATE INDEX IF NOT EXISTS idx_document_chunk_embedding ON "DocumentChunk" USING hnsw (embedding vector_cosine_ops);
+-- CREATE INDEX IF NOT EXISTS idx_document_chunk_document_id ON "DocumentChunk"(document_id);
+-- CREATE INDEX IF NOT EXISTS idx_document_chunk_embedding ON "DocumentChunk" USING hnsw (embedding vector_cosine_ops);
 
 -- Alternative index (choose one based on your use case)
 -- CREATE INDEX IF NOT EXISTS idx_document_chunk_embedding_ivfflat ON "DocumentChunk" USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);

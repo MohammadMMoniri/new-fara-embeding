@@ -53,7 +53,7 @@ func NewSearchService(repo *repository.Repository, openai *openai.Client, logger
 // 	return s.repo.GetDocumentChunks(ctx, documentID)
 // }
 
-func (s *SearchService) ListDocuments(ctx context.Context, limit, offset string) ([]models.Document, error) {
+func (s *SearchService) ListDocuments(ctx context.Context, limit, offset string) ([]models.DocumentListItem, error) {
 	return s.repo.ListDocuments(ctx, limit, offset)
 }
 

@@ -179,8 +179,8 @@ func (r *Repository) DeleteDocument(ctx context.Context, id string) error {
 // 	return count, err
 // }
 
-func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([]models.Document, error) {
-	query := `SELECT id, filename, summary, metadata, status, created_at, updated_at 
+func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([]models.DocumentListItem, error) {
+	query := `SELECT id, filename, summary 
 			  FROM "Document" 
 			  WHERE status = 'processed' 
 			  ORDER BY created_at DESC 
@@ -192,12 +192,11 @@ func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([
 	}
 	defer rows.Close()
 
-	var documents []models.Document
+	var documents []models.DocumentListItem
 	for rows.Next() {
-		var doc models.Document
+		var doc models.DocumentListItem
 		err := rows.Scan(
-			&doc.ID, &doc.Filename, &doc.Summary, &doc.Metadata,
-			&doc.Status, &doc.CreatedAt, &doc.UpdatedAt,
+			&doc.ID, &doc.Filename, &doc.Summary,
 		)
 		if err != nil {
 			r.logger.Error("Failed to scan document row", "error", err)

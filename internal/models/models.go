@@ -52,3 +52,9 @@ type StatusResponse struct {
 	Status string `json:"status"`
 	// ChunkCount int    `json:"chunkCount"`
 }
+
+type DocumentListItem struct {
+	ID       string  `json:"id"`
+	Filename string  `json:"filename"`
+	Summary  *string `json:"summary"`
+}

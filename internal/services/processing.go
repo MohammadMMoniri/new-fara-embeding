@@ -184,7 +184,12 @@ func (s *ProcessingService) processDocumentAsync(ctx context.Context, doc *model
 
 	// Update document metadata if available
 	if len(metadata) > 0 {
-		if err := s.repo.UpdateDocumentMetadata(ctx, doc.ID, metadata); err != nil {
+		// Parse JSON bytes to map for proper storage
+		var metadataMap map[string]interface{}
+		if err := json.Unmarshal(metadata, &metadataMap); err != nil {
+			return fmt.Errorf("failed to parse metadata: %w", err)
+		}
+		if err := s.repo.UpdateDocumentMetadata(ctx, doc.ID, metadataMap); err != nil {
 			return fmt.Errorf("failed to update document metadata: %w", err)
 		}
 	}

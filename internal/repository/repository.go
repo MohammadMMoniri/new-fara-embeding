@@ -63,7 +63,7 @@ func (r *Repository) UpdateDocumentSummary(ctx context.Context, id, summary stri
 	return err
 }
 
-func (r *Repository) UpdateDocumentMetadata(ctx context.Context, id string, metadata []byte) error {
+func (r *Repository) UpdateDocumentMetadata(ctx context.Context, id string, metadata map[string]interface{}) error {
 	query := `UPDATE "Document" SET metadata = $1, updated_at = NOW() WHERE id = $2`
 	_, err := r.db.Exec(ctx, query, metadata, id)
 	return err
@@ -200,6 +200,7 @@ func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([
 			&doc.Status, &doc.CreatedAt, &doc.UpdatedAt,
 		)
 		if err != nil {
+			r.logger.Error("Failed to scan document row", "error", err)
 			return nil, err
 		}
 		documents = append(documents, doc)

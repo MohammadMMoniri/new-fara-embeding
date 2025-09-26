@@ -6,16 +6,16 @@ import (
 )
 
 type Document struct {
-	ID        string    `json:"id" db:"id"`
-	Filename  string    `json:"filename" db:"filename"`
-	FileType  string    `json:"fileType" db:"file_type"`
-	FilePath  string    `json:"filePath" db:"file_path"`
-	Content   *string   `json:"content" db:"content"`
-	Summary   *string   `json:"summary" db:"summary"`
-	Metadata  []byte    `json:"metadata" db:"metadata"`
-	Status    string    `json:"status" db:"status"`
-	CreatedAt time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
+	ID        string                 `json:"id" db:"id"`
+	Filename  string                 `json:"filename" db:"filename"`
+	FileType  string                 `json:"fileType" db:"file_type"`
+	FilePath  string                 `json:"filePath" db:"file_path"`
+	Content   *string                `json:"content" db:"content"`
+	Summary   *string                `json:"summary" db:"summary"`
+	Metadata  map[string]interface{} `json:"metadata" db:"metadata"`
+	Status    string                 `json:"status" db:"status"`
+	CreatedAt time.Time              `json:"createdAt" db:"created_at"`
+	UpdatedAt time.Time              `json:"updatedAt" db:"updated_at"`
 }
 
 // type DocumentChunk struct {

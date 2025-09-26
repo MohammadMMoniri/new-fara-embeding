@@ -151,7 +151,7 @@ func (h *Handler) GetProcessingStatus(c *gin.Context) {
 
 func (h *Handler) ListDocuments(c *gin.Context) {
 
-	documents, err := h.services.Search.ListDocuments(c.Request.Context(), "0", "500")
+	documents, err := h.services.Search.ListDocuments(c.Request.Context(), "500", "0")
 	if err != nil {
 		h.logger.Error("Failed to list documents", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list documents"})

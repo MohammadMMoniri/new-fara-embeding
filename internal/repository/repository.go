@@ -184,7 +184,7 @@ func (r *Repository) ListDocuments(ctx context.Context, limit, offset string) ([
 			  FROM "Document" 
 			  WHERE status = 'processed' 
 			  ORDER BY created_at DESC 
-			  LIMIT $2 OFFSET $3`
+			  LIMIT $1 OFFSET $2`
 
 	rows, err := r.db.Query(ctx, query, limit, offset)
 	if err != nil {
